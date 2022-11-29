@@ -1,0 +1,35 @@
+# Numerous always-ignore extensions
+*.jpr
+*.jws
+*.orig
+*.log
+*.rej
+*.swo
+*.swp
+*.vi
+*~
+*.sass-cache
+.data
+.classpath
+# OS or Editor folders
+.DS_Store
+.cache
+.project
+.settings
+.tmproj
+nbproject
+Thumbs.db
+startup.bat
+
+# Brunch output folder.
+classes/
+target/
+/.idea/
+/node_modules/
+/private
+/Design
+/settings.js
+.env.wwoCredentials
+.env.dealerListCredentials
+.env.tyreImageCredentials
+UIM_Bilddaten.csv

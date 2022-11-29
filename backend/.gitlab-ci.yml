@@ -1,0 +1,115 @@
+stages:
+  - build
+#  - test
+  - deploy
+
+image: node:16-alpine
+
+cache:
+  key: # use key means, if one (of two possible files in files:) changes, the cache will rebuild
+    files:
+      - package.json
+      - yarn.lock
+  paths:
+    - node_modules
+    - yarn_cache
+
+before_script:
+  - apk add --update --no-cache openssh sshpass rsync
+
+
+##
+## STAGING
+##
+
+build_staging:
+  stage: build
+  environment:
+    name: staging
+    url: https://staging.volvotyre.com
+  script:
+    - echo -e " === APP-BACKEND === \n ...starting BUILD-Process for staging"
+    - cd backend
+    - yarn
+  artifacts:
+    paths:
+      - backend/
+      - private/
+  only:
+    - staging
+
+deploy_staging:
+  stage: deploy
+  environment:
+    name: staging
+    url: https://staging.volvotyre.com
+  needs:
+    - job: build_staging
+      artifacts: true
+#  needs: [test_linter]
+  script:
+    - echo -e " === APP-BACKEND === \n ...starting deployment Process for staging"
+    - echo "$SERVER_LOGIN" > "$(pwd)/private/.env.hetzner"
+    - echo "$SSH_KEY" > "$(pwd)/private/vTyre_deploy"
+    - chmod 600 "$(pwd)/private/vTyre_deploy"
+    - cd backend
+    - export NODE_OPTIONS=--max_old_space_size=8048
+    - echo "$SETTINGS_JS" > "$(pwd)/settings.js"
+    - echo "$WWO_CREDENTIALS" > "$(pwd)/serverScripts/wwoImporter/.env.wwoCredentials"
+    - echo "$DEALERLIST_CREDENTIALS" > "$(pwd)/serverScripts/dealerListImporter/.env.dealerListCredentials"
+    - yarn deploy_staging
+  only:
+    - staging
+#  rules:
+#    - if: '$CI_COMMIT_BRANCH == "main"'
+#      when: manual
+
+
+##
+## PRODUCTION
+##
+
+build_production:
+  stage: build
+  environment:
+    name: production
+    url: https://typreportal.volvocars.biz
+  script:
+    - echo -e " === APP-BACKEND === \n ...starting BUILD-Process for production"
+    - cd backend
+    - yarn
+  artifacts:
+    paths:
+      - backend/
+      - private/
+  only:
+    - production
+
+deploy_production:
+  stage: deploy
+  environment:
+    name: production
+    url: https://tyreportal.volvocars.biz
+  needs:
+    - job: build_production
+      artifacts: true
+#  needs: [test_linter]
+  script:
+    - echo -e " === APP-BACKEND === \n ...starting deployment Process for production"
+    - echo "$SERVER_LOGIN" > "$(pwd)/private/.env.hetzner"
+    - echo "$SSH_KEY" > "$(pwd)/private/vTyre_deploy"
+    - chmod 600 "$(pwd)/private/vTyre_deploy"
+    - cd backend
+    - export NODE_OPTIONS=--max_old_space_size=8048
+    - echo "$SETTINGS_JS" > "$(pwd)/settings.js"
+    - echo "$WWO_CREDENTIALS" > "$(pwd)/serverScripts/wwoImporter/.env.wwoCredentials"
+    - echo "$DEALERLIST_CREDENTIALS" > "$(pwd)/serverScripts/dealerListImporter/.env.dealerListCredentials"
+    - yarn deploy_production
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "production"'
+      when: manual
+
+
+
+
+
